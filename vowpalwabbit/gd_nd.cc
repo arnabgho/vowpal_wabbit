@@ -5,14 +5,16 @@
 #include <fstream>
 #include <float.h>
 #include <string.h>
+#include <vector>
 #ifdef _WIN32
 #include <winsock2.h>
 #else
 #include <netdb.h>
 #endif
+#include <algorithm>
 
 using namespace std;
-using namespace LEARNER;
+// using namespace LEARNER;
 
 struct val_id{
 	double val;
@@ -21,18 +23,25 @@ struct val_id{
 
 typedef val_id vl_pair;
 
-size_t comp_vl_pair(const void *a,const void *b){
-	if(((vl_pair*)a)->val > ((vl_pair*)b)->val)
-		return 1;
+// bool comp_vl_pair(const void *a,const void *b){
+// 	if(((vl_pair*)a)->val > ((vl_pair*)b)->val)
+// 		return true;
+// 	else
+// 		return false;
+// }
+
+bool comp_vl_pair(const vl_pair &a,const vl_pair &b){
+	if(a.val > b.val)
+		return true;
 	else
-		return -1;
+		return false;
 }
 
-void non_decomposable_gradient_descent( std::vector<double>& stream ,std::vector<double>& labels, std::vector<double>& w_init , std::vector<double>& w_bar , size_t num_data , size_t d,size_t e, double k, size_t tic_spacing, size_t num_tics, size_t pass_counter, size_t num_epochs){   
+int non_decomposable_gradient_descent( vector<double>& stream ,vector<double>& labels, vector<double>& w_init , vector<double>& w_bar , size_t num_data , size_t d,size_t e, double k, size_t tic_spacing, size_t num_tics, size_t pass_counter, size_t num_epochs){   
 	int t_counter,t_counter_now,d_counter,update_counter;
 	double C_t;
-	std::vector<double> w(d,0),y_bar_x(d,0),y_ast_x(d,0),w_inter(d,0);
-	std::vector<vl_pair> score_loc_pairs(e);
+	vector<double> w(d,0),y_bar_x(d,0),y_ast_x(d,0),w_inter(d,0);
+	vector<vl_pair> score_loc_pairs(e);
 
 	int x_offset,x_temp_offset;
 	int tic_counter, e_counter, inner_counter;
@@ -60,12 +69,12 @@ void non_decomposable_gradient_descent( std::vector<double>& stream ,std::vector
 	for (d_counter = 0; d_counter < d ; ++d_counter)
 	{
 		w[d_counter]=w_init[d_counter];
-		w_inter[d_counter=w_init[d_counter];
+		w_inter[d_counter]=w_init[d_counter];
 	}
 
 	//Go over the data stream
 	while(1){
-		C_t=C/sqrt((pass_counter-1)*num_epochs+e_counter+1);
+		C_t=C_t/sqrt((pass_counter-1)*num_epochs+e_counter+1);
 
 		if(t_counter+e>=num_data)
 			this_epoch_length=num_data- t_counter;
@@ -145,16 +154,16 @@ void non_decomposable_gradient_descent( std::vector<double>& stream ,std::vector
 
 			for (inner_counter =this_epoch_length-1; inner_counter >= this_epoch_length - num_to_set_pos; inner_counter--)
 			{
-				x_temp_offset=d*score_loc_pairs[inner_counter].loc;
+				x_temp_offset=d*score_loc_pairs[inner_counter].id;
 				for (d_counter = 0; d_counter < d ; ++d_counter)
-					y_bar_x+=stream[x_temp_offset+d_counter];
+					y_bar_x[d_counter] += stream[x_temp_offset+d_counter];
 			}
 
 			for (; inner_counter >=0 ; --inner_counter)
 			{
-				x_temp_offset=d*score_loc_pairs[inner_counter].loc;
+				x_temp_offset=d*score_loc_pairs[inner_counter].id;
 				for (d_counter = 0; d_counter < d ; ++d_counter)
-					y_bar_x-=stream[x_temp_offset+d_counter];
+					y_bar_x[d_counter] -= stream[x_temp_offset+d_counter];
 			}
 
 			for (d_counter = 0; d_counter < d ; ++d_counter)
@@ -180,7 +189,7 @@ void non_decomposable_gradient_descent( std::vector<double>& stream ,std::vector
 				w_bar[(d+1)*tic_counter+d_counter]=w_inter[d_counter];
 			}
 			w_bar[(d+1)*tic_counter+d]=time_elapsed;		
-			ticCounter++;
+			tic_counter++;
 		}
 		e_counter++;
 	}
@@ -189,4 +198,6 @@ void non_decomposable_gradient_descent( std::vector<double>& stream ,std::vector
 		w_bar[(d+1)*tic_counter+d_counter]=w_inter[d_counter];
 	}
 	w_bar[(d+1)*tic_counter+d]=time_elapsed;
+
+	return 0;
 }
